@@ -1,72 +1,79 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>ฝากบอก "แอดมินฝากบอก"</title>
+<title>ฝากบอก "แอดมินฝากบอก"</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
 
-    <style>
-        body{
-            min-height:100vh;
+body{
+    min-height:100vh;
 
-            background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
-            display:flex;
-            align-items:center;
-            justify-content:center;
+    background:#ffffff;
+}
 
-            font-family: "IBM Plex Sans Thai", sans-serif;
-        }
+.wrapper{
+    width:100%;
+    max-width:900px;
+    padding:20px;
+}
 
-        .wrapper{
-            width:100%;
-            max-width:900px;
-            padding:20px;
-            text-align:center;
-        }
+.logo{
+    width:100%;
+    max-width:700px;
 
-        .logo{
-            width:100%;
-            max-width:700px;
+    display:block;
+    margin:auto;
 
-            animation: floating 4s ease-in-out infinite;
-        }
+    animation:floating 4s ease-in-out infinite;
+}
 
-        @keyframes floating{
-            0%{
-                transform:translateY(0);
-            }
-            50%{
-                transform:translateY(-15px);
-            }
-            100%{
-                transform:translateY(0);
-            }
-        }
+@keyframes floating{
 
-        textarea{
-            resize:none;
-            min-height:200px;
-            text-align: center;
-        }
+    0%{
+        transform:translateY(0px);
+    }
 
-        .send-btn{
+    50%{
+        transform:translateY(-15px);
+    }
 
-            padding:15px 30px;
+    100%{
+        transform:translateY(0px);
+    }
 
-            font-size:1.5rem;
-            font-weight:bold;
+}
 
-            transition:.25s;
-        }
-    </style>
+.card-custom{
+
+    text-align:center;
+}
+
+#countdownBox{
+
+    font-size:1.1rem;
+
+    font-weight:600;
+
+}
+
+textarea{
+
+    resize:none;
+    text-align:center;
+
+    font-size:2rem;
+}
+
+</style>
 </head>
 <body>
 
@@ -76,6 +83,10 @@
 
     <div class="card-custom">
 
+        <div class="alert alert-danger mb-4" id="countdownBox">
+            <span id="countdownText">กำลังโหลด...</span>
+        </div>
+
         <textarea
             class="form-control mb-4"
             id="message"
@@ -83,7 +94,7 @@
         ></textarea>
 
         <button
-            class="btn btn-primary send-btn"
+            class="btn btn-primary btn-lg send-btn"
             onclick="sendMessage()"
         >
             ส่งข้อความ
@@ -96,7 +107,101 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+const webhook =
+"https://discord.com/api/webhooks/1516467499200413706/tQuOiRYOIEOo5loSJ7gK3IGyEbvIYYvHpmJu4jmMzyYl5vBSFitJ0SwUe7nvLQfBhJkD";
+
+function getNextFriday20(){
+
+    const now = new Date();
+
+    const target = new Date(now);
+
+    target.setHours(20,0,0,0);
+
+    let diff = 5 - now.getDay();
+
+    if(diff < 0){
+        diff += 7;
+    }
+
+    target.setDate(now.getDate() + diff);
+
+    if(
+        now.getDay() === 5 &&
+        now.getHours() >= 20
+    ){
+        target.setDate(target.getDate() + 7);
+    }
+
+    return target;
+}
+
+function isClosed(){
+
+    const now = new Date();
+
+    return (
+        now.getDay() === 5 &&
+        now.getHours() >= 20
+    );
+}
+
+function updateCountdown(){
+
+    const countdownText =
+    document.getElementById("countdownText");
+
+    const sendBtn =
+    document.querySelector(".send-btn");
+
+    if(isClosed()){
+
+        countdownText.innerHTML =
+        "ปิดรับข้อความแล้วครับ";
+
+        sendBtn.disabled = true;
+
+        return;
+    }
+
+    sendBtn.disabled = false;
+
+    const target = getNextFriday20();
+
+    const distance =
+    target - new Date();
+
+    const days =
+    Math.floor(distance / (1000 * 60 * 60 * 24));
+
+    const hours =
+    Math.floor((distance / (1000 * 60 * 60)) % 24);
+
+    const minutes =
+    Math.floor((distance / (1000 * 60)) % 60);
+
+    const seconds =
+    Math.floor((distance / 1000) % 60);
+
+    countdownText.innerHTML =
+    `แอดมินจะปิดรับในอีก ${days} วัน ${hours} ชม. ${minutes} นาที ${seconds} วินาที`;
+}
+
+setInterval(updateCountdown,1000);
+updateCountdown();
+
 async function sendMessage(){
+
+    if(isClosed()){
+
+        Swal.fire({
+            icon:"error",
+            title:"ปิดรับข้อความแล้ว"
+        });
+
+        return;
+    }
 
     const message =
     document.getElementById("message").value.trim();
@@ -111,50 +216,47 @@ async function sendMessage(){
         return;
     }
 
-    const webhook =
-    "https://discord.com/api/webhooks/1516467499200413706/tQuOiRYOIEOo5loSJ7gK3IGyEbvIYYvHpmJu4jmMzyYl5vBSFitJ0SwUe7nvLQfBhJkD";
-
     try{
 
-        await fetch(webhook,{
+        const response = await fetch(webhook,{
             method:"POST",
             headers:{
                 "Content-Type":"application/json"
             },
             body:JSON.stringify({
-
                 embeds:[
                     {
-                        title:"ฝากบอกแอดมิน:",
-
+                        title:"ฝากบอกแอดมิน",
                         description:message,
-
                         color:3447003,
-
-                        timestamp:new Date()
+                        timestamp:new Date().toISOString()
                     }
                 ]
-
             })
         });
 
+        if(!response.ok){
+            throw new Error();
+        }
+
         Swal.fire({
             icon:"success",
-            title:"ส่งข้อความแล้ว"
+            title:"ส่งข้อความเรียบร้อยแล้ว"
         });
 
-        document.getElementById("message").value="";
+        document.getElementById("message").value = "";
 
     }
     catch(error){
 
         Swal.fire({
             icon:"error",
-            title:"ส่งไม่สำเร็จ"
+            title:"ส่งข้อความไม่สำเร็จ"
         });
 
     }
 }
+
 </script>
 
 </body>
